@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Video Maker Viral System</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Internal short-form production platform</p>
+          <h1>Video Maker Viral System</h1>
+        </div>
+        <div class="topbar-actions">
+          <span id="systemStatus" class="status-pill">Auto Niche Finder ready</span>
+          <button id="topFindButton" class="primary-button" type="button">Find Best Viral Niche</button>
+        </div>
+      </header>
+
+      <div class="workspace">
+        <nav class="flow-rail" aria-label="Main workflow">
+          <button class="flow-step active" type="button" data-view="dashboard">
+            <span>01</span>
+            Dashboard
+          </button>
+          <button class="flow-step" type="button" data-view="autoNiche">
+            <span>02</span>
+            Auto Niche Finder
+          </button>
+          <button class="flow-step" type="button" data-view="ideas">
+            <span>03</span>
+            Idea Generator
+          </button>
+          <button class="flow-step" type="button" data-view="script">
+            <span>04</span>
+            Script Builder
+          </button>
+          <button class="flow-step" type="button" data-view="scenes">
+            <span>05</span>
+            Scene Breakdown
+          </button>
+          <button class="flow-step" type="button" data-view="prompts">
+            <span>06</span>
+            Visual Prompts
+          </button>
+          <button class="flow-step" type="button" data-view="voiceover">
+            <span>07</span>
+            Voiceover
+          </button>
+          <button class="flow-step" type="button" data-view="captions">
+            <span>08</span>
+            Captions
+          </button>
+          <button class="flow-step" type="button" data-view="production">
+            <span>09</span>
+            Production Board
+          </button>
+          <button class="flow-step" type="button" data-view="export">
+            <span>10</span>
+            Export Center
+          </button>
+        </nav>
+
+        <main class="view-stage">
+          <section id="dashboard" class="view active">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Default flow</p>
+                <h2>Auto Niche Finder first, production pipeline second.</h2>
+              </div>
+              <button id="mainFindButton" class="primary-button large" type="button">Find Best Viral Niche</button>
+            </div>
+
+            <div class="dashboard-grid">
+              <article class="tool-panel">
+                <div class="panel-title-row">
+                  <div>
+                    <p class="eyebrow">Selected niche</p>
+                    <h3 id="dashboardNicheName">Waiting for analysis</h3>
+                  </div>
+                  <div class="score-badge" id="dashboardScore">--</div>
+                </div>
+                <p id="dashboardReason" class="reason-text">
+                  Run the Auto Niche Finder to rank the internal niche base and pick the strongest opportunity.
+                </p>
+                <div class="quick-facts" id="dashboardFacts"></div>
+              </article>
+
+              <article class="tool-panel">
+                <p class="eyebrow">Scoring model</p>
+                <h3>Balanced opportunity score</h3>
+                <div class="model-grid">
+                  <div>
+                    <strong>Rewards</strong>
+                    <span>Retention, AI production ease, global appeal, twist-friendly stories, scalable output.</span>
+                  </div>
+                  <div>
+                    <strong>Penalizes</strong>
+                    <span>Sensitive risk, real-footage dependence, explicit violence, heavy reliance on real cases.</span>
+                  </div>
+                </div>
+              </article>
+            </div>
+
+            <div class="pipeline-band" id="pipelineBand"></div>
+          </section>
+
+          <section id="autoNiche" class="view">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Auto Niche Finder</p>
+                <h2>Ranking and selection logic</h2>
+              </div>
+              <button id="generateIdeasButton" class="secondary-button" type="button">Generate Ideas for This Niche</button>
+            </div>
+
+            <div class="selection-layout">
+              <article class="selected-panel">
+                <div class="selected-header">
+                  <div>
+                    <p class="eyebrow">Selected niche</p>
+                    <h3 id="selectedNicheName">Not selected</h3>
+                  </div>
+                  <div class="score-ring">
+                    <span id="selectedScore">--</span>
+                    <small>/100</small>
+                  </div>
+                </div>
+                <p id="selectedReason" class="reason-text">Run analysis from the dashboard.</p>
+                <div id="selectedMeta" class="meta-grid"></div>
+              </article>
+
+              <article class="control-panel">
+                <label for="manualNicheSelect">Manual niche override</label>
+                <select id="manualNicheSelect"></select>
+                <div id="selectedStrengths" class="chip-group"></div>
+                <div id="selectedRisks" class="chip-group risk"></div>
+              </article>
+            </div>
+
+            <div class="ranking-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Rank</th>
+                    <th>Niche</th>
+                    <th>Score</th>
+                    <th>Production</th>
+                    <th>Language</th>
+                    <th>Platforms</th>
+                    <th>Strengths</th>
+                    <th>Risks</th>
+                  </tr>
+                </thead>
+                <tbody id="rankingTable"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section id="ideas" class="view">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Idea Generator</p>
+                <h2 id="ideasTitle">Initial video ideas</h2>
+              </div>
+              <button id="refreshIdeasButton" class="secondary-button" type="button">Research + Generate Fresh Ideas</button>
+            </div>
+            <section class="reference-panel">
+              <div class="reference-panel-header">
+                <div>
+                  <p class="eyebrow">Live references</p>
+                  <h3>Research used for fresh ideas</h3>
+                </div>
+                <span id="referenceStatus" class="status-pill">No research yet</span>
+              </div>
+              <div id="referenceGrid" class="reference-grid empty-state">Run the idea generator to search references.</div>
+            </section>
+            <div id="ideasGrid" class="ideas-grid"></div>
+          </section>
+
+          <section id="script" class="view">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Script Builder</p>
+                <h2 id="scriptTitle">Retention script</h2>
+              </div>
+            </div>
+            <div id="scriptOutput" class="artifact-list empty-state">Select an idea to generate a script.</div>
+          </section>
+
+          <section id="scenes" class="view">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Scene Breakdown</p>
+                <h2>Timed scenes</h2>
+              </div>
+            </div>
+            <div id="sceneOutput" class="artifact-list empty-state">No scene breakdown yet.</div>
+          </section>
+
+          <section id="prompts" class="view">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Visual Prompt Generator</p>
+                <h2>AI visual prompts</h2>
+              </div>
+            </div>
+            <div id="promptOutput" class="artifact-list empty-state">No prompts yet.</div>
+          </section>
+
+          <section id="voiceover" class="view">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Voiceover Builder</p>
+                <h2>Final narration</h2>
+              </div>
+            </div>
+            <textarea id="voiceoverOutput" class="artifact-textarea" readonly>Select an idea to generate narration.</textarea>
+          </section>
+
+          <section id="captions" class="view">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Captions Builder</p>
+                <h2>Short-form captions</h2>
+              </div>
+            </div>
+            <div id="captionsOutput" class="caption-stack empty-state">No captions yet.</div>
+          </section>
+
+          <section id="production" class="view">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Production Board</p>
+                <h2>Video status</h2>
+              </div>
+            </div>
+            <div id="productionBoard" class="board-grid"></div>
+          </section>
+
+          <section id="export" class="view">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Export Center</p>
+                <h2>Copy-ready production package</h2>
+              </div>
+              <div class="button-row">
+                <button id="copyScenePromptsButton" class="secondary-button" type="button">Copy Scene Prompts</button>
+                <button id="copyExportButton" class="secondary-button" type="button">Copy Package</button>
+              </div>
+            </div>
+            <div class="export-controls">
+              <label for="sceneDurationInput">
+                Scene duration
+                <span>Split video prompts into clips from 5 to 15 seconds.</span>
+              </label>
+              <select id="sceneDurationInput">
+                <option value="5">5 seconds</option>
+                <option value="6">6 seconds</option>
+                <option value="7">7 seconds</option>
+                <option value="8">8 seconds</option>
+                <option value="9">9 seconds</option>
+                <option value="10" selected>10 seconds</option>
+                <option value="11">11 seconds</option>
+                <option value="12">12 seconds</option>
+                <option value="13">13 seconds</option>
+                <option value="14">14 seconds</option>
+                <option value="15">15 seconds</option>
+              </select>
+              <div id="segmentSummary" class="segment-summary">Build a video package to generate separated prompts.</div>
+            </div>
+            <div class="export-grid">
+              <div>
+                <div class="export-label">Separated video generator prompts</div>
+                <textarea id="segmentedPromptOutput" class="artifact-textarea prompt-export" readonly>No separated prompts yet.</textarea>
+              </div>
+              <div>
+                <div class="export-label">Full production package</div>
+                <textarea id="exportOutput" class="artifact-textarea export" readonly>No export package yet.</textarea>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

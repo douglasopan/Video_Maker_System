@@ -1,0 +1,25 @@
+# Runtime data
+data/
+exports/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+venv/
+
+# Local/editor noise
+.DS_Store
+Thumbs.db
+*.log
+
+# Generated media
+*.mp4
+*.wav
+*.mov
+*.avi
+*.webm
