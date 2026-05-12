@@ -1,0 +1,11 @@
+{
+  "cleanUrls": true,
+  "functions": {
+    "api/*.py": {
+      "maxDuration": 30
+    },
+    "server.py": {
+      "maxDuration": 30
+    }
+  }
+}

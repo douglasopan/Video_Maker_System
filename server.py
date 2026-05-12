@@ -5,8 +5,10 @@ import email.utils
 import hashlib
 import html
 import json
+import os
 import random
 import re
+import tempfile
 import time
 import urllib.parse
 import urllib.request
@@ -18,7 +20,7 @@ from typing import Any
 
 
 ROOT = Path(__file__).resolve().parent
-DATA_DIR = ROOT / "data"
+DATA_DIR = Path(tempfile.gettempdir()) / "video-maker-system-data" if os.environ.get("VERCEL") else ROOT / "data"
 HISTORY_FILE = DATA_DIR / "idea-history.json"
 CACHE_FILE = DATA_DIR / "reference-cache.json"
 
@@ -544,6 +546,10 @@ class VideoMakerHandler(SimpleHTTPRequestHandler):
             return
 
         return super().do_GET()
+
+
+class handler(VideoMakerHandler):
+    pass
 
 
 def main() -> None:
