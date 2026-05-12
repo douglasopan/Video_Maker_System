@@ -4,12 +4,12 @@ Internal tool for discovering viral short-form niches and turning them into idea
 
 ## Features
 
-- Auto Niche Finder with weighted scoring
-- Live reference research through a local Python backend
+- Real Niche Research board with weighted opportunity scoring
+- Live reference research through Vercel functions and the local Python backend
 - Fresh idea generation with local history to avoid repetition
 - Script, scene, visual prompt, voiceover, caption, and export flows
 - Export Center with separated video-generator prompts from 5 to 15 seconds
-- Local fallback mode when external references are unavailable
+- Hard stop when real references are unavailable, so the app does not invent generic research data
 
 ## Run Locally
 

@@ -2,19 +2,19 @@
 
 ## Objetivo do projeto
 
-Criar uma plataforma interna para descobrir automaticamente nichos virais promissores e transformar esses nichos em ideias, roteiros, cenas, prompts visuais, narracoes, legendas e pacotes de producao para videos curtos no YouTube Shorts, TikTok, Instagram Reels e Facebook Reels.
+Criar uma plataforma interna para pesquisar nichos virais promissores com dados reais e transformar o nicho escolhido em ideias, roteiros, cenas, prompts visuais, narracoes, legendas e pacotes de producao para videos curtos no YouTube Shorts, TikTok, Instagram Reels e Facebook Reels.
 
-O usuario nao deve precisar saber qual nicho escolher. A ferramenta deve ajudar a encontrar automaticamente uma oportunidade de conteudo e guiar todo o processo de producao.
+O usuario nao deve precisar chegar sabendo qual nicho escolher. A ferramenta deve pesquisar oportunidades reais no inicio, mostrar os dados relevantes de cada nicho e permitir que o usuario escolha qual oportunidade produzir.
 
-## Importante - escolha automatica de nicho
+## Importante - pesquisa real antes da escolha
 
 O aplicativo nao deve obrigar o usuario a escolher manualmente um nicho no inicio.
 
-O sistema deve ter um modulo chamado Auto Niche Finder.
+O sistema deve ter um modulo chamado Real Niche Research.
 
-Esse modulo deve simular e analisar nichos virais, escolhendo automaticamente o melhor nicho para gerar videos curtos.
+Esse modulo deve pesquisar referencias reais, analisar nichos virais e mostrar um ranking com evidencias para que o usuario escolha qual nicho produzir.
 
-Na primeira versao MVP, sem integracao real com YouTube ou TikTok, o app deve usar uma base interna de nichos pre-cadastrados e um sistema de pontuacao.
+Na primeira versao MVP, sem integracao oficial com YouTube ou TikTok, o app deve usar a base interna de nichos como ponto de partida, mas as pontuacoes e ideias devem depender de referencias reais coletadas na web/RSS.
 
 ## Base inicial de nichos
 
@@ -63,11 +63,11 @@ O melhor nicho nao deve ser escolhido apenas pelo maior potencial viral. Ele tam
 
 ## Fluxo principal do aplicativo
 
-1. Auto Niche Finder
-   O sistema escolhe automaticamente o melhor nicho viral com base em uma pontuacao interna.
+1. Real Niche Research
+   O sistema pesquisa referencias reais para todos os nichos, calcula uma pontuacao de oportunidade e mostra os dados para escolha.
 
 2. Idea Generator
-   Depois que o nicho for escolhido automaticamente, o sistema gera ideias de videos curtos para esse nicho.
+   Depois que o usuario escolhe um nicho pesquisado, o sistema gera ideias de videos curtos para esse nicho.
 
    O gerador deve pesquisar referencias atuais na web, usar essas referencias apenas como inspiracao de formato/tendencia e criar ideias novas e ficcionais, sem copiar casos reais, nomes reais, vitimas, acusacoes ou detalhes sensiveis.
 
@@ -98,19 +98,19 @@ O melhor nicho nao deve ser escolhido apenas pelo maior potencial viral. Ele tam
 
 No Dashboard, criar um botao principal:
 
-`Find Best Viral Niche`
+`Research Real Niches`
 
 Ao clicar, o sistema deve:
 
-1. Analisar a base de nichos.
-2. Calcular a pontuacao de cada nicho.
-3. Escolher automaticamente o nicho mais promissor.
-4. Exibir o motivo da escolha.
-5. Sugerir 10 ideias iniciais para esse nicho.
+1. Pesquisar referencias reais para a base de nichos.
+2. Calcular a pontuacao de oportunidade de cada nicho.
+3. Exibir dados relevantes de cada nicho.
+4. Exibir o motivo do ranking.
+5. Permitir que o usuario escolha qual nicho produzir.
 
-## Tela Auto Niche Finder
+## Tela Real Niche Research
 
-A tela Auto Niche Finder deve mostrar:
+A tela Real Niche Research deve mostrar:
 
 - ranking dos nichos;
 - pontuacao de cada nicho;
@@ -119,10 +119,12 @@ A tela Auto Niche Finder deve mostrar:
 - dificuldade de producao;
 - idioma recomendado;
 - plataformas recomendadas;
-- justificativa da escolha;
+- referencias reais usadas como evidencia;
+- consultas usadas na pesquisa;
+- justificativa da pontuacao;
 - botao `Generate Ideas for This Niche`.
 
-Mesmo com escolha automatica, o usuario ainda pode trocar o nicho manualmente se quiser, mas o fluxo padrao deve ser automatico.
+O fluxo padrao deve ser: pesquisar primeiro, mostrar dados reais e deixar o usuario escolher qual nicho produzir.
 
 ## Export Center
 
@@ -151,7 +153,7 @@ O sistema deve:
 - gerar ideias novas a partir de padroes de formato, nao copiando fatos reais;
 - salvar historico local de ideias geradas;
 - evitar repetir sempre as mesmas ideias;
-- funcionar em modo fallback interno caso a internet ou a busca externa falhe.
+- bloquear a geracao quando nao houver referencias reais suficientes, sem inventar dados genericos.
 
 ## Exemplo de resultado esperado
 

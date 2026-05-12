@@ -13,6 +13,7 @@ import time
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -23,6 +24,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = Path(tempfile.gettempdir()) / "video-maker-system-data" if os.environ.get("VERCEL") else ROOT / "data"
 HISTORY_FILE = DATA_DIR / "idea-history.json"
 CACHE_FILE = DATA_DIR / "reference-cache.json"
+MIN_REAL_REFERENCES = 3
 
 USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -62,6 +64,69 @@ NICHE_QUERY_MAP = {
         "unexplained mystery shorts storytelling",
         "short mystery twist story video",
     ],
+    "animated-moral-stories": [
+        "animated moral story shorts",
+        "moral story YouTube Shorts",
+        "animated story TikTok trend",
+    ],
+    "bizarre-facts": [
+        "bizarre facts shorts trend",
+        "weird facts YouTube Shorts",
+        "strange facts TikTok viral",
+    ],
+    "historical-drama-shorts": [
+        "historical drama shorts",
+        "history storytelling YouTube Shorts",
+        "historical TikTok story trend",
+    ],
+    "animal-rescue-stories": [
+        "animal rescue story shorts",
+        "animal rescue viral video",
+        "pet rescue TikTok story",
+    ],
+    "scary-camping-stories": [
+        "scary camping story shorts",
+        "camping horror TikTok story",
+        "campfire horror YouTube Shorts",
+    ],
+    "court-case-stories": [
+        "court case story shorts",
+        "courtroom drama YouTube Shorts",
+        "legal story TikTok trend",
+    ],
+    "emergency-call-stories": [
+        "emergency call story shorts",
+        "911 call story YouTube Shorts",
+        "dispatcher story TikTok",
+    ],
+    "creepy-neighbor-stories": [
+        "creepy neighbor story shorts",
+        "neighbor mystery TikTok story",
+        "suburban mystery YouTube Shorts",
+    ],
+    "lost-footage-stories": [
+        "lost footage story shorts",
+        "found footage mystery shorts",
+        "lost tape horror TikTok",
+    ],
+}
+
+PRODUCTION_TRAITS = {
+    "ai-bodycam-stories": {"ease": 92, "safety": 74, "scale": 94, "global": 90, "risk": 40},
+    "police-encounter-stories": {"ease": 70, "safety": 48, "scale": 80, "global": 77, "risk": 78},
+    "true-crime-shorts": {"ease": 62, "safety": 36, "scale": 72, "global": 80, "risk": 87},
+    "horror-pov": {"ease": 88, "safety": 62, "scale": 88, "global": 87, "risk": 58},
+    "survival-stories": {"ease": 82, "safety": 66, "scale": 80, "global": 84, "risk": 55},
+    "mystery-stories": {"ease": 85, "safety": 82, "scale": 90, "global": 88, "risk": 38},
+    "animated-moral-stories": {"ease": 90, "safety": 90, "scale": 92, "global": 85, "risk": 24},
+    "bizarre-facts": {"ease": 87, "safety": 86, "scale": 94, "global": 82, "risk": 30},
+    "historical-drama-shorts": {"ease": 75, "safety": 64, "scale": 76, "global": 78, "risk": 50},
+    "animal-rescue-stories": {"ease": 77, "safety": 70, "scale": 82, "global": 88, "risk": 48},
+    "scary-camping-stories": {"ease": 89, "safety": 66, "scale": 87, "global": 85, "risk": 52},
+    "court-case-stories": {"ease": 73, "safety": 50, "scale": 78, "global": 74, "risk": 74},
+    "emergency-call-stories": {"ease": 80, "safety": 56, "scale": 86, "global": 84, "risk": 66},
+    "creepy-neighbor-stories": {"ease": 86, "safety": 68, "scale": 89, "global": 84, "risk": 50},
+    "lost-footage-stories": {"ease": 88, "safety": 64, "scale": 88, "global": 87, "risk": 55},
 }
 
 HOOK_TEMPLATES = [
@@ -148,7 +213,7 @@ def write_json(path: Path, data: dict[str, Any]) -> None:
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
-def http_get(url: str, timeout: int = 12) -> str:
+def http_get(url: str, timeout: int = 8) -> str:
     request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     with urllib.request.urlopen(request, timeout=timeout) as response:
         charset = response.headers.get_content_charset() or "utf-8"
@@ -273,40 +338,29 @@ def duckduckgo_references(query: str, limit: int = 8) -> list[dict[str, Any]]:
     return results
 
 
-def fallback_references(niche_name: str) -> list[dict[str, Any]]:
-    seed_titles = [
-        f"{niche_name} format reference: strong first-second hook",
-        f"{niche_name} pacing reference: short setup, fast escalation, final twist",
-        f"{niche_name} visual reference: AI-friendly fictional scenes",
-    ]
-    return [
-        {
-            "title": title,
-            "url": "",
-            "source": "Internal fallback",
-            "published": now_iso(),
-            "query": niche_name,
-            "type": "fallback",
-            "score": 50,
-        }
-        for title in seed_titles
-    ]
-
-
-def queries_for_niche(niche_id: str, niche_name: str) -> list[str]:
+def queries_for_niche(niche_id: str, niche_name: str, limit: int = 5) -> list[str]:
     base = NICHE_QUERY_MAP.get(niche_id, [])
-    generic = [
+    broad_queries = [
         f"{niche_name} viral shorts",
         f"{niche_name} YouTube Shorts storytelling",
         f"{niche_name} TikTok story trend",
     ]
-    return list(dict.fromkeys([*base, *generic]))[:5]
+    return list(dict.fromkeys([*base, *broad_queries]))[:limit]
 
 
-def fetch_references(niche_id: str, niche_name: str, force_fresh: bool = False) -> dict[str, Any]:
+def fetch_references(
+    niche_id: str,
+    niche_name: str,
+    force_fresh: bool = False,
+    query_limit: int = 5,
+    per_query_limit: int = 5,
+    max_references: int = 18,
+    include_web: bool = False,
+) -> dict[str, Any]:
     ensure_data_dir()
     cache = read_json(CACHE_FILE, {"references": {}})
-    cache_key = f"{niche_id}:{niche_name.lower()}"
+    mode_key = f"q{query_limit}:p{per_query_limit}:max{max_references}:web{int(include_web)}"
+    cache_key = f"{niche_id}:{niche_name.lower()}:{mode_key}"
     cached = cache.get("references", {}).get(cache_key)
     if cached and not force_fresh:
         fetched_at = cached.get("fetched_at", "")
@@ -317,18 +371,19 @@ def fetch_references(niche_id: str, niche_name: str, force_fresh: bool = False) 
         except Exception:
             pass
 
-    queries = queries_for_niche(niche_id, niche_name)
+    queries = queries_for_niche(niche_id, niche_name, query_limit)
     references: list[dict[str, Any]] = []
     errors: list[str] = []
     for query in queries:
         try:
-            references.extend(google_news_references(query, limit=5))
+            references.extend(google_news_references(query, limit=per_query_limit))
         except Exception as exc:
             errors.append(f"Google News failed for {query}: {exc}")
-        try:
-            references.extend(duckduckgo_references(query, limit=5))
-        except Exception as exc:
-            errors.append(f"DuckDuckGo failed for {query}: {exc}")
+        if include_web:
+            try:
+                references.extend(duckduckgo_references(query, limit=per_query_limit))
+            except Exception as exc:
+                errors.append(f"DuckDuckGo failed for {query}: {exc}")
 
     seen: set[str] = set()
     unique: list[dict[str, Any]] = []
@@ -338,11 +393,8 @@ def fetch_references(niche_id: str, niche_name: str, force_fresh: bool = False) 
             continue
         seen.add(key)
         unique.append(reference)
-        if len(unique) >= 18:
+        if len(unique) >= max_references:
             break
-
-    if not unique:
-        unique = fallback_references(niche_name)
 
     payload = {
         "niche_id": niche_id,
@@ -350,11 +402,95 @@ def fetch_references(niche_id: str, niche_name: str, force_fresh: bool = False) 
         "fetched_at": now_iso(),
         "queries": queries,
         "references": unique,
+        "has_real_data": len(unique) >= MIN_REAL_REFERENCES,
+        "min_real_references": MIN_REAL_REFERENCES,
         "errors": errors[-5:],
     }
     cache.setdefault("references", {})[cache_key] = payload
     write_json(CACHE_FILE, cache)
     return payload
+
+
+def analyze_research_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    references = payload.get("references", [])
+    traits = PRODUCTION_TRAITS.get(
+        payload.get("niche_id"),
+        {"ease": 70, "safety": 65, "scale": 70, "global": 70, "risk": 55},
+    )
+    sources = sorted({reference.get("source", "") for reference in references if reference.get("source")})
+    average_reference_score = round(
+        sum(reference.get("score", 0) for reference in references) / len(references)
+    ) if references else 0
+    recent_count = 0
+    for reference in references:
+      published = reference.get("published")
+      try:
+          if published and (datetime.now(timezone.utc) - datetime.fromisoformat(published)).days <= 120:
+              recent_count += 1
+      except Exception:
+          pass
+    real_data_score = min(
+        100,
+        round(len(references) * 5 + len(sources) * 4 + recent_count * 5 + average_reference_score * 0.35),
+    )
+    score = min(
+        100,
+        round(
+            real_data_score * 0.45
+            + traits["ease"] * 0.16
+            + traits["scale"] * 0.14
+            + traits["global"] * 0.1
+            + traits["safety"] * 0.1
+            - traits["risk"] * 0.05
+        ),
+    )
+    return {
+        "id": payload.get("niche_id"),
+        "name": payload.get("niche_name"),
+        "score": score,
+        "realDataScore": real_data_score,
+        "referencesCount": len(references),
+        "sourcesCount": len(sources),
+        "recentCount": recent_count,
+        "averageReferenceScore": average_reference_score,
+        "productionEase": traits["ease"],
+        "safetyScore": traits["safety"],
+        "scaleScore": traits["scale"],
+        "globalAppeal": traits["global"],
+        "riskScore": traits["risk"],
+        "hasRealData": len(references) >= MIN_REAL_REFERENCES,
+        "topSources": sources[:4],
+        "queries": payload.get("queries", []),
+        "references": references[:6],
+        "errors": payload.get("errors", []),
+        "reason": (
+            f"{len(references)} real references found across {len(sources)} sources, with {recent_count} recent signals."
+            if len(references) >= MIN_REAL_REFERENCES
+            else f"Only {len(references)} real references found. Production should not start."
+        ),
+    }
+
+
+def research_niches(niches: list[dict[str, str]]) -> list[dict[str, Any]]:
+    ranking = []
+
+    def research_one(niche: dict[str, str]) -> dict[str, Any]:
+        payload = fetch_references(
+            niche.get("id", "custom"),
+            niche.get("name", "Custom"),
+            force_fresh=True,
+            query_limit=2,
+            per_query_limit=4,
+            max_references=8,
+            include_web=False,
+        )
+        return analyze_research_payload(payload)
+
+    with ThreadPoolExecutor(max_workers=min(8, max(1, len(niches)))) as executor:
+        futures = [executor.submit(research_one, niche) for niche in niches]
+        for future in as_completed(futures):
+            ranking.append(future.result())
+    return sorted(ranking, key=lambda item: item.get("score", 0), reverse=True)
 
 
 def stable_hash(value: str) -> str:
@@ -413,11 +549,15 @@ def extract_reference_detail(reference: dict[str, Any], rng: random.Random) -> s
 
 
 def generate_ideas(niche_id: str, niche_name: str, references: list[dict[str, Any]], count: int) -> list[dict[str, Any]]:
+    if len(references or []) < MIN_REAL_REFERENCES:
+        raise ValueError(
+            f"Not enough real references for {niche_name}. Found {len(references or [])}, need {MIN_REAL_REFERENCES}."
+        )
+
     used = get_used_idea_keys()
     used_titles = get_used_titles()
     batch_titles: set[str] = set()
     rng = random.Random(f"{niche_id}:{time.time_ns()}")
-    references = references or fallback_references(niche_name)
     ideas: list[dict[str, Any]] = []
     attempts = 0
 
@@ -472,26 +612,6 @@ def generate_ideas(niche_id: str, niche_name: str, references: list[dict[str, An
         used_titles.add(title_key)
         batch_titles.add(title_key)
 
-    if len(ideas) < count:
-        for index in range(len(ideas), count):
-            key = stable_hash(f"{niche_id}:fallback:{time.time_ns()}:{index}")
-            ideas.append(
-                {
-                    "id": f"{niche_id}-live-{key}",
-                    "key": key,
-                    "title": f"Fresh Twist Concept {index + 1} {rng.choice(TITLE_SUFFIXES)}",
-                    "hook": rng.choice(HOOK_TEMPLATES).format(detail=rng.choice(DETAIL_TEMPLATES)),
-                    "twist": rng.choice(TWIST_TEMPLATES),
-                    "angle": rng.choice(ANGLE_TEMPLATES),
-                    "length": "45-60 seconds",
-                    "nicheId": niche_id,
-                    "referenceTitle": "Generated fallback concept",
-                    "referenceUrl": "",
-                    "referenceSource": "Internal generator",
-                    "noveltySeed": rng.randint(100, 999),
-                }
-            )
-
     save_ideas_to_history(ideas)
     return ideas
 
@@ -531,21 +651,53 @@ class VideoMakerHandler(SimpleHTTPRequestHandler):
             count = max(1, min(int(query.get("count", ["10"])[0]), 25))
             force_fresh = query.get("fresh", ["0"])[0] == "1"
             reference_payload = fetch_references(niche_id, niche_name, force_fresh=force_fresh)
-            ideas = generate_ideas(niche_id, niche_name, reference_payload["references"], count)
-            self.send_json(
-                {
-                    "niche_id": niche_id,
-                    "niche_name": niche_name,
-                    "generated_at": now_iso(),
-                    "ideas": ideas,
-                    "references": reference_payload["references"],
-                    "queries": reference_payload["queries"],
-                    "errors": reference_payload.get("errors", []),
-                }
-            )
+            try:
+                ideas = generate_ideas(niche_id, niche_name, reference_payload["references"], count)
+                self.send_json(
+                    {
+                        "ok": True,
+                        "niche_id": niche_id,
+                        "niche_name": niche_name,
+                        "generated_at": now_iso(),
+                        "ideas": ideas,
+                        "references": reference_payload["references"],
+                        "queries": reference_payload["queries"],
+                        "errors": reference_payload.get("errors", []),
+                    }
+                )
+            except ValueError as exc:
+                self.send_json({"ok": False, "error": str(exc), "ideas": [], "references": []}, status=424)
             return
 
         return super().do_GET()
+
+    def do_POST(self) -> None:
+        parsed = urllib.parse.urlparse(self.path)
+
+        if parsed.path == "/api/research-niches":
+            length = int(self.headers.get("Content-Length", "0") or "0")
+            raw_body = self.rfile.read(length).decode("utf-8") if length else "{}"
+            try:
+                body = json.loads(raw_body)
+                niches = body.get("niches", [])
+                if not isinstance(niches, list) or not niches:
+                    self.send_json({"ok": False, "error": "No niches provided for research."}, status=400)
+                    return
+                ranking = research_niches(niches)
+                self.send_json(
+                    {
+                        "ok": True,
+                        "generated_at": now_iso(),
+                        "min_real_references": MIN_REAL_REFERENCES,
+                        "ranking": ranking,
+                    }
+                )
+            except Exception as exc:
+                self.send_json({"ok": False, "error": str(exc)}, status=500)
+            return
+
+        self.send_response(404)
+        self.end_headers()
 
 
 class handler(VideoMakerHandler):

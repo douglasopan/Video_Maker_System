@@ -14,8 +14,8 @@
           <h1>Video Maker Viral System</h1>
         </div>
         <div class="topbar-actions">
-          <span id="systemStatus" class="status-pill">Auto Niche Finder ready</span>
-          <button id="topFindButton" class="primary-button" type="button">Find Best Viral Niche</button>
+          <span id="systemStatus" class="status-pill">Real research ready</span>
+          <button id="topFindButton" class="primary-button" type="button">Research Real Niches</button>
         </div>
       </header>
 
@@ -27,7 +27,7 @@
           </button>
           <button class="flow-step" type="button" data-view="autoNiche">
             <span>02</span>
-            Auto Niche Finder
+            Real Niche Research
           </button>
           <button class="flow-step" type="button" data-view="ideas">
             <span>03</span>
@@ -68,9 +68,9 @@
             <div class="section-heading">
               <div>
                 <p class="eyebrow">Default flow</p>
-                <h2>Auto Niche Finder first, production pipeline second.</h2>
+                <h2>Research real niche signals first. Choose what to produce second.</h2>
               </div>
-              <button id="mainFindButton" class="primary-button large" type="button">Find Best Viral Niche</button>
+              <button id="mainFindButton" class="primary-button large" type="button">Research Real Niches</button>
             </div>
 
             <div class="dashboard-grid">
@@ -83,7 +83,7 @@
                   <div class="score-badge" id="dashboardScore">--</div>
                 </div>
                 <p id="dashboardReason" class="reason-text">
-                  Run the Auto Niche Finder to rank the internal niche base and pick the strongest opportunity.
+                  Run real niche research to compare opportunities using live sources before production starts.
                 </p>
                 <div class="quick-facts" id="dashboardFacts"></div>
               </article>
@@ -104,16 +104,29 @@
               </article>
             </div>
 
+            <section class="research-board">
+              <div class="research-board-header">
+                <div>
+                  <p class="eyebrow">Real research board</p>
+                  <h3>Choose what to produce from live evidence</h3>
+                </div>
+                <span id="nicheResearchStatus" class="status-pill">Research starts automatically</span>
+              </div>
+              <div id="nicheResearchGrid" class="niche-research-grid empty-state">
+                Searching real references for each niche.
+              </div>
+            </section>
+
             <div class="pipeline-band" id="pipelineBand"></div>
           </section>
 
           <section id="autoNiche" class="view">
             <div class="section-heading">
               <div>
-                <p class="eyebrow">Auto Niche Finder</p>
-                <h2>Ranking and selection logic</h2>
+                <p class="eyebrow">Real Niche Research</p>
+                <h2>Ranking with source evidence</h2>
               </div>
-              <button id="generateIdeasButton" class="secondary-button" type="button">Generate Ideas for This Niche</button>
+              <button id="generateIdeasButton" class="secondary-button" type="button">Generate Ideas From Real Research</button>
             </div>
 
             <div class="selection-layout">
@@ -128,12 +141,12 @@
                     <small>/100</small>
                   </div>
                 </div>
-                <p id="selectedReason" class="reason-text">Run analysis from the dashboard.</p>
+                <p id="selectedReason" class="reason-text">Run research from the dashboard.</p>
                 <div id="selectedMeta" class="meta-grid"></div>
               </article>
 
               <article class="control-panel">
-                <label for="manualNicheSelect">Manual niche override</label>
+                <label for="manualNicheSelect">Choose another niche manually</label>
                 <select id="manualNicheSelect"></select>
                 <div id="selectedStrengths" class="chip-group"></div>
                 <div id="selectedRisks" class="chip-group risk"></div>

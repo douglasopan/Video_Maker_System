@@ -1,5 +1,5 @@
 const pipelineSteps = [
-  "Auto Niche Finder",
+  "Real Niche Research",
   "Idea Generator",
   "Script Builder",
   "Scene Breakdown",
@@ -220,7 +220,7 @@ const niches = [
       realFactDependent: false,
     },
     strengths: ["Low sensitivity", "Very repeatable", "Comment-friendly theories"],
-    risks: ["Needs strong original twists", "Hooks can feel generic"],
+    risks: ["Needs strong original twists", "Hooks need specific evidence"],
     productionDifficulty: "Low",
     language: "English",
     platforms: ["YouTube Shorts", "TikTok", "Facebook Reels"],
@@ -566,6 +566,8 @@ const state = {
   references: [],
   referenceQueries: [],
   referenceMode: "idle",
+  nicheResearch: [],
+  nicheResearchMode: "idle",
   exportSceneSeconds: 10,
 };
 
@@ -669,17 +671,17 @@ function renderManualSelect() {
     )
     .join("");
   if (!selectedNiche) {
-    select.insertAdjacentHTML("afterbegin", '<option value="" selected disabled>Run Auto Niche Finder</option>');
+    select.insertAdjacentHTML("afterbegin", '<option value="" selected disabled>Run Real Niche Research</option>');
   }
 }
 
 function renderDashboard() {
   const selectedNiche = getSelectedNiche();
   if (!selectedNiche) {
-    $("#dashboardNicheName").textContent = "Waiting for analysis";
+    $("#dashboardNicheName").textContent = "Waiting for real research";
     $("#dashboardScore").textContent = "--";
     $("#dashboardReason").textContent =
-      "Run the Auto Niche Finder to rank the internal niche base and pick the strongest opportunity.";
+      "Run real niche research to rank current source signals before choosing what to produce.";
     $("#dashboardFacts").innerHTML = "";
     return;
   }
@@ -769,84 +771,136 @@ function renderRanking() {
     .join("");
 }
 
-function makeIdeaTitle(niche, index) {
-  const titleParts = [
-    "The Call That Should Not Exist",
-    "The Detail Everyone Missed",
-    "The Wrong Door at Midnight",
-    "The Voice Behind the Static",
-    "The Last Clip on the Device",
-    "The Neighbor Who Knew Too Much",
-    "The Map With One Extra Street",
-    "The Siren That Stopped Too Soon",
-    "The Witness in the Reflection",
-    "The Ending Hidden in Frame One",
-  ];
-  if (niche.id === "ai-bodycam-stories") return titleParts[index];
-  return `${titleParts[index]} - ${niche.name}`;
+function getResearchForNiche(nicheId) {
+  return state.nicheResearch.find((item) => item.id === nicheId);
 }
 
-function generateIdeasForNiche(niche) {
-  const twistPool = [
-    "the person asking for help is visible in the opening frame",
-    "the safest-looking character caused the entire situation by accident",
-    "the object in the background has been moving between cuts",
-    "the final clue proves the narrator misunderstood the threat",
-    "the first sentence was actually the ending",
-    "the location is empty because the event already happened",
-    "the recording was made by someone who was never in the scene",
-    "the warning sign is written in the protagonist's handwriting",
-    "the final frame reveals a second camera watching the first",
-    "the rescue was staged to expose the real danger",
-  ];
+function renderNicheResearchBoard() {
+  const status = $("#nicheResearchStatus");
+  const grid = $("#nicheResearchGrid");
+  if (!status || !grid) return;
 
-  return Array.from({ length: 10 }, (_, index) => {
-    const title = makeIdeaTitle(niche, index);
-    const hook = `A ${niche.protagonist} enters a ${niche.setting}, but one tiny detail makes the ${niche.world} feel impossible.`;
-    const twist = twistPool[index];
-    return {
-      id: `${niche.id}-idea-${index + 1}`,
-      title,
-      hook,
-      twist,
-      angle: `${niche.style} Keep the story fictional, compact, and built around a reveal.`,
-      length: niche.recommendedVideoLength,
-      nicheId: niche.id,
-    };
+  if (state.nicheResearchMode === "loading") {
+    status.textContent = "Searching real data...";
+    grid.className = "niche-research-grid empty-state";
+    grid.textContent = "Searching real references, sources, recency, and production signals for each niche.";
+    return;
+  }
+
+  if (state.nicheResearchMode === "error") {
+    status.textContent = "Research failed";
+    grid.className = "niche-research-grid empty-state";
+    grid.textContent = "No generic data will be used. Check the connection or run research again.";
+    return;
+  }
+
+  if (!state.nicheResearch.length) {
+    status.textContent = "No real research yet";
+    grid.className = "niche-research-grid empty-state";
+    grid.textContent = "Research starts automatically. Use the button above to run it again.";
+    return;
+  }
+
+  const usableCount = state.nicheResearch.filter((item) => item.hasRealData).length;
+  status.textContent = `${usableCount} niches with enough real data`;
+  grid.className = "niche-research-grid";
+  grid.innerHTML = state.nicheResearch
+    .map((item, index) => {
+      const baseNiche = niches.find((niche) => niche.id === item.id) || {};
+      const references = item.references || [];
+      const evidence = references.slice(0, 3).map((reference) => {
+        const title = escapeHtml(reference.title || "Reference");
+        const source = escapeHtml(reference.source || "Source");
+        return reference.url
+          ? `<a href="${escapeHtml(reference.url)}" target="_blank" rel="noreferrer">${title}<br><span>${source}</span></a>`
+          : `<a>${title}<br><span>${source}</span></a>`;
+      });
+      return `
+        <article class="niche-research-card">
+          <div class="idea-meta">
+            <span class="mini-label">Rank ${index + 1}</span>
+            <span class="mini-label">${item.hasRealData ? "Real data" : "Need more data"}</span>
+          </div>
+          <h4>${escapeHtml(item.name)}</h4>
+          <div class="score-bar"><span style="width: ${item.score}%"></span></div>
+          <div class="metric-row">
+            <div class="metric"><span>Opportunity</span><strong>${item.score}/100</strong></div>
+            <div class="metric"><span>References</span><strong>${item.referencesCount}</strong></div>
+            <div class="metric"><span>Sources</span><strong>${item.sourcesCount}</strong></div>
+          </div>
+          <div class="metric-row">
+            <div class="metric"><span>Recent</span><strong>${item.recentCount}</strong></div>
+            <div class="metric"><span>Production</span><strong>${item.productionEase}/100</strong></div>
+            <div class="metric"><span>Risk</span><strong>${item.riskScore}/100</strong></div>
+          </div>
+          <p>${escapeHtml(item.reason)}</p>
+          <div class="research-details">
+            <span>Language: <strong>${escapeHtml(baseNiche.language || "English")}</strong></span>
+            <span>Difficulty: <strong>${escapeHtml(baseNiche.productionDifficulty || "Medium")}</strong></span>
+            <span>Platforms: <strong>${escapeHtml(formatList(baseNiche.platforms || []))}</strong></span>
+          </div>
+          <div class="query-list">${(item.queries || [])
+            .slice(0, 3)
+            .map((query) => `<span>${escapeHtml(query)}</span>`)
+            .join("")}</div>
+          <div class="evidence-list">${evidence.join("")}</div>
+          <button class="choose-niche-button" type="button" data-research-niche-id="${item.id}" ${
+            item.hasRealData ? "" : "disabled"
+          }>Produce This Niche</button>
+        </article>
+      `;
+    })
+    .join("");
+}
+
+async function researchRealNiches() {
+  state.nicheResearchMode = "loading";
+  state.nicheResearch = [];
+  $("#systemStatus").textContent = "Researching real niche opportunities...";
+  renderNicheResearchBoard();
+
+  const body = {
+    niches: niches.map((niche) => ({ id: niche.id, name: niche.name })),
+  };
+
+  const response = await fetch("/api/research-niches", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
   });
+  const payload = await response.json();
+  if (!response.ok || !payload.ok) {
+    throw new Error(payload.error || `Research API returned ${response.status}`);
+  }
+
+  state.nicheResearch = payload.ranking || [];
+  state.nicheResearchMode = "ready";
+  $("#systemStatus").textContent = `Research complete: ${state.nicheResearch.length} niches analyzed`;
+  renderNicheResearchBoard();
+  return state.nicheResearch;
 }
 
 function normalizeLiveIdea(idea, niche, index) {
-  return {
-    id: idea.id || `${niche.id}-live-${index + 1}-${Date.now()}`,
-    key: idea.key || "",
-    title: idea.title || makeIdeaTitle(niche, index % 10),
-    hook:
-      idea.hook ||
-      `A ${niche.protagonist} enters a ${niche.setting}, but one new reference changes the story angle.`,
-    twist: idea.twist || "the final frame makes viewers replay the opening shot",
-    angle:
-      idea.angle ||
-      `${niche.style} Keep the story fictional, compact, and built around a reveal.`,
-    length: idea.length || niche.recommendedVideoLength,
-    nicheId: idea.nicheId || niche.id,
-    referenceTitle: idea.referenceTitle || "",
-    referenceUrl: idea.referenceUrl || "",
-    referenceSource: idea.referenceSource || "",
-    noveltySeed: idea.noveltySeed || "",
-  };
-}
+  const requiredFields = ["id", "key", "title", "hook", "twist", "angle", "length"];
+  const missingField = requiredFields.find((field) => !idea[field]);
+  if (missingField) {
+    throw new Error(`Research API returned an incomplete idea without ${missingField}.`);
+  }
 
-function createFallbackResearch(niche) {
-  return [
-    {
-      title: `${niche.name} internal pattern: first-second hook, one clue, final twist`,
-      source: "Local fallback",
-      url: "",
-      type: "fallback",
-      score: 50,
-    },
-  ];
+  return {
+    id: idea.id,
+    key: idea.key,
+    title: idea.title,
+    hook: idea.hook,
+    twist: idea.twist,
+    angle: idea.angle,
+    length: idea.length,
+    nicheId: idea.nicheId || niche.id,
+    referenceTitle: idea.referenceTitle,
+    referenceUrl: idea.referenceUrl,
+    referenceSource: idea.referenceSource,
+    noveltySeed: idea.noveltySeed,
+  };
 }
 
 async function researchAndGenerateIdeasForNiche(niche, options = {}) {
@@ -866,24 +920,21 @@ async function researchAndGenerateIdeasForNiche(niche, options = {}) {
       t: String(Date.now()),
     });
     const response = await fetch(`/api/generate-ideas?${params.toString()}`);
-    if (!response.ok) throw new Error(`Reference API returned ${response.status}`);
     const payload = await response.json();
+    if (!response.ok || payload.ok === false) {
+      throw new Error(payload.error || `Reference API returned ${response.status}`);
+    }
     state.references = payload.references || [];
     state.referenceQueries = payload.queries || [];
     state.referenceMode = "live";
     $("#systemStatus").textContent = `Fresh ideas generated from ${state.references.length} live references`;
     return (payload.ideas || []).map((idea, index) => normalizeLiveIdea(idea, niche, index));
   } catch (error) {
-    state.references = createFallbackResearch(niche);
+    state.references = [];
     state.referenceQueries = [];
-    state.referenceMode = "fallback";
-    $("#systemStatus").textContent = "Offline fallback ideas generated";
-    return generateIdeasForNiche(niche).map((idea, index) => ({
-      ...idea,
-      referenceTitle: state.references[0].title,
-      referenceSource: state.references[0].source,
-      noveltySeed: Date.now() + index,
-    }));
+    state.referenceMode = "error";
+    $("#systemStatus").textContent = `No real ideas generated: ${error.message}`;
+    return [];
   }
 }
 
@@ -899,6 +950,13 @@ function renderReferences() {
     return;
   }
 
+  if (state.referenceMode === "error") {
+    status.textContent = "Need real sources";
+    grid.className = "reference-grid empty-state";
+    grid.textContent = "The system could not find enough real references. It will not generate generic ideas.";
+    return;
+  }
+
   if (!state.references.length) {
     status.textContent = "No research yet";
     grid.className = "reference-grid empty-state";
@@ -906,7 +964,7 @@ function renderReferences() {
     return;
   }
 
-  status.textContent = state.referenceMode === "live" ? "Live research" : "Fallback mode";
+  status.textContent = "Live research";
   grid.className = "reference-grid";
   grid.innerHTML = state.references
     .slice(0, 6)
@@ -1302,6 +1360,7 @@ function renderAll() {
   renderManualSelect();
   renderSelectedNiche();
   renderRanking();
+  renderNicheResearchBoard();
   renderReferences();
   renderIdeas();
   renderScript();
@@ -1327,19 +1386,23 @@ function clearGeneratedArtifacts() {
 }
 
 async function runAutoNicheFinder() {
-  const best = getBestNiche();
-  state.selectedNicheId = best.id;
   clearGeneratedArtifacts();
-  $("#systemStatus").textContent = `${best.name} selected at ${best.score}/100`;
   renderAll();
-  state.ideas = await researchAndGenerateIdeasForNiche(best, { forceFresh: true });
-  renderAll();
-  setActiveView("autoNiche");
+  try {
+    await researchRealNiches();
+    setActiveView("dashboard");
+  } catch (error) {
+    state.nicheResearchMode = "error";
+    $("#systemStatus").textContent = `Research failed: ${error.message}`;
+    renderNicheResearchBoard();
+  }
 }
 
 async function generateIdeas() {
   if (!state.selectedNicheId) {
-    state.selectedNicheId = getBestNiche().id;
+    $("#systemStatus").textContent = "Choose a researched niche before generating ideas";
+    setActiveView("dashboard");
+    return;
   }
   const niche = getSelectedNiche();
   clearGeneratedArtifacts();
@@ -1357,6 +1420,26 @@ async function selectNiche(nicheId) {
   renderAll();
   state.ideas = await researchAndGenerateIdeasForNiche(niche, { forceFresh: true });
   renderAll();
+}
+
+async function chooseResearchedNiche(nicheId) {
+  const research = getResearchForNiche(nicheId);
+  if (!research || !research.hasRealData) {
+    $("#systemStatus").textContent = "This niche does not have enough real research yet";
+    return;
+  }
+
+  state.selectedNicheId = nicheId;
+  clearGeneratedArtifacts();
+  state.references = research.references || [];
+  state.referenceQueries = research.queries || [];
+  state.referenceMode = "live";
+  const niche = getSelectedNiche();
+  $("#systemStatus").textContent = `${niche.name} chosen from real research`;
+  renderAll();
+  state.ideas = await researchAndGenerateIdeasForNiche(niche, { forceFresh: false });
+  renderAll();
+  setActiveView("ideas");
 }
 
 function selectIdea(ideaId) {
@@ -1399,6 +1482,11 @@ function bindEvents() {
     if (row) selectNiche(row.dataset.nicheId);
   });
 
+  $("#nicheResearchGrid").addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-research-niche-id]");
+    if (button) chooseResearchedNiche(button.dataset.researchNicheId);
+  });
+
   $("#ideasGrid").addEventListener("click", (event) => {
     const button = event.target.closest("button[data-idea-id]");
     if (button) selectIdea(button.dataset.ideaId);
@@ -1437,6 +1525,11 @@ function init() {
   renderPipeline();
   renderAll();
   bindEvents();
+  researchRealNiches().catch((error) => {
+    state.nicheResearchMode = "error";
+    $("#systemStatus").textContent = `Research failed: ${error.message}`;
+    renderNicheResearchBoard();
+  });
 }
 
 init();
