@@ -320,9 +320,9 @@ async function researchNiches(niches) {
   const researched = await Promise.all(
     niches.map(async (niche) => {
       const payload = await fetchReferences(niche.id, niche.name, {
-        queryLimit: 2,
-        perQueryLimit: 4,
-        maxReferences: 8,
+        queryLimit: 3,
+        perQueryLimit: 5,
+        maxReferences: 10,
       });
       return analyzeNicheResearch({ ...niche, ...payload });
     }),

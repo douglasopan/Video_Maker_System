@@ -479,9 +479,9 @@ def research_niches(niches: list[dict[str, str]]) -> list[dict[str, Any]]:
             niche.get("id", "custom"),
             niche.get("name", "Custom"),
             force_fresh=True,
-            query_limit=2,
-            per_query_limit=4,
-            max_references=8,
+            query_limit=3,
+            per_query_limit=5,
+            max_references=10,
             include_web=False,
         )
         return analyze_research_payload(payload)
