@@ -9,7 +9,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
-from server import fetch_references, generate_ideas, now_iso
+from lib.backend_core import fetch_references, generate_ideas, now_iso
 
 
 class handler(BaseHTTPRequestHandler):

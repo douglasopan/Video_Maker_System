@@ -14,7 +14,7 @@ Internal tool for discovering viral short-form niches and turning them into idea
 ## Run Locally
 
 ```bash
-python server.py --host 127.0.0.1 --port 4173
+python tools/local_server.py --host 127.0.0.1 --port 4173
 ```
 
 Then open:

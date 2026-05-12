@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Any
 
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = Path(tempfile.gettempdir()) / "video-maker-system-data" if os.environ.get("VERCEL") else ROOT / "data"
 HISTORY_FILE = DATA_DIR / "idea-history.json"
 CACHE_FILE = DATA_DIR / "reference-cache.json"
